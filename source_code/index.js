@@ -30,31 +30,77 @@ app.use(bodyParser.json());
 //handle the post request
 
 app.post('/', function (req, res, next) {
-  //add log.
-  
-  //console.log(req.body.queryResult.intent.displayName);
-  switch(req.body.queryResult.intent.displayName){
+  var intentName = req.body.queryResult.intent.displayName;
+  var queryText = req.body.queryResult.queryText;
+  //console.log(intentName);
+
+  switch(intentName){
     case 'starter':
       console.log('starter called');
       break;
 
     case 'getUser':
       console.log('getUser called');
-
+      var unikey = req.body.queryResult.parameters.unikey;
       db.connect(function(err){  
-        if(err){ console.log(err); }
-        console.log('Dabatase connected');
-        
-        db.query("SELECT * FROM users WHERE UniKey = '" + req.body.queryResult.parameters.unikey + "'"
-        , function (err, result){
-          if(err) { throw err; console.log(err);};
-          name = result[0].Name;
-          res.send(createNameRespond(name));
+          db.query("SELECT * FROM users WHERE UniKey = '" + unikey + "'"
+          , function (err, result){
+            try{    
+              name = result[0].Name;
+              res.send(nameRespond(name));  
+            }catch(err) {
+              console.log(err);
+              res.send(simpleTextRespond("Cannot find unikey:" + unikey + ", would you like to try again?"));  
+            }
           });
       });
+
       break;
+    case 'logProductive':
+      console.log('logProductive');
+      logData(queryText);
+      //respond is defiend on the dialog console.
+      break;
+    case 'logProductive_hasMore':
+      console.log('logProductive_hasMore');
+      logData(queryText);
+      //respond is defiend on the dialog console.
+      break;
+    //---
+    case 'logUnproductive':
+      console.log('logUnproductive');
+      //logData(queryText);
+      db.connect(function(err){  
+        db.query("SELECT * FROM tasks WHERE CourseCode = 'COMP5703'"
+        , function (err, result){
+          try{    
+            var url = result[0].Url;
+            res.send(simpleTextRespond("Check out this video: " + url));  
+          }catch(err) {
+            console.log(err);
+          }
+        });
+    });
+      break;
+    
+
     default:
-      // code block
+      console.log('no match intent found');
+  }
+  function logData(text){
+
+    db.connect(function(err){
+      try{
+        db.query("INSERT INTO Logs (CourseCode, LogDate, LogDescription) " +
+        "VALUES ('COMP5703', NOW(), " + "'" + text + "'" + ");"
+        );
+        console.log("query success");
+      }catch(err){
+        console.log(err);
+      }
+
+    });
+
   }
 
 
@@ -82,14 +128,29 @@ app.post('/', function (req, res, next) {
     // });
 });
  
-function createNameRespond(name) {
+function nameRespond(name) {
   let respond = {
-    "fulfillmentText": "This is a text response",
+    "fulfillmentText": "NameRespond_text",
     "fulfillmentMessages": [
       {
         "text": {
             "text":[
                 "Hello " + name + ", what have you done today?"
+            ]
+        }         
+      }
+    ]
+  }
+  return respond;
+}
+function simpleTextRespond(text) {
+  let respond = {
+    "fulfillmentText": "NameRespond_text",
+    "fulfillmentMessages": [
+      {
+        "text": {
+            "text":[
+                text
             ]
         }         
       }
