@@ -4,7 +4,11 @@ let express = require('express');
 let mysql = require('mysql');
 
 const app = express();
-const port = 3000;
+const port = 4000;
+
+//testing connection to front-end
+app.get("/testFrontEnd", (req, res) => res.send("Hello Frontend"));
+
 
 //create db
 app.get('/createdb', (req, res) => {
@@ -27,8 +31,42 @@ app.listen(port, () => console.log(`Example app listening at http://localhost:${
 app.use(bodyParser.urlencoded({ extended: false }));
 // parse application/json
 app.use(bodyParser.json());
-//handle the post request
 
+//###########################################################################################################
+//--------handling wesite calls-------------
+app.post('/login', function(req, res) {
+  //get data from the front end input
+  let credential = req.body;
+
+  //if the password match, return the user
+  db.connect(function(err){  
+    db.query("SELECT * FROM users WHERE UniKey = '" + credential.unikey + "'"
+    , function (err, result){
+      try{     
+        
+        if(credential.password == result[0].Password){
+          let user = result[0] ;
+          res.set('Content-Type', 'application/json');
+          res.send({
+              user,
+              isSuccess: true
+          });
+          
+        }
+      }
+      catch(err) {
+        console.log(err);
+        res.set('Content-Type', 'application/json');
+        res.send({
+            isSuccess: false
+        });
+      }
+    });
+  });
+});
+
+//###########################################################################################################
+//--------Handling dialogflow calls-------------
 app.post('/', function (req, res, next) {
   var intentName = req.body.queryResult.intent.displayName;
   var queryText = req.body.queryResult.queryText;
@@ -71,6 +109,8 @@ app.post('/', function (req, res, next) {
       console.log('logUnproductive');
       //logData(queryText);
       db.connect(function(err){  
+        //TODO:
+        //select a earliest task that the student did finish, and make suggestion.
         db.query("SELECT * FROM tasks WHERE CourseCode = 'COMP5703'"
         , function (err, result){
           try{    
@@ -103,29 +143,6 @@ app.post('/', function (req, res, next) {
 
   }
 
-
-
-  //whenever the server receive a post, store the user input to 'Log' in the database
-    // console.log("----------request --------");
-    // console.log(req.body);
-    // console.log("----------request --------");
-    
-    // db.connect(function(err){
-    //   if(err){ console.log(err); }
-    //   console.log('Dabatase connected');  
-      
-    //   db.query("INSERT INTO Courses (CourseCode, CourseName, UniKey) " +
-    //   "VALUES ('COMP5703', 'Capstone Project', 'admin');", function (err, result){
-    //    if(err) { throw err; console.log(err);};  
-    //    });
-
-    //    db.query("INSERT INTO Logs (CourseCode, LogDate, LogDescription) " +
-    //    "VALUES ('COMP5703', NOW(), " + "'" + req.body.queryResult.queryText + "'" + ");", function (err, result){
-    //     if(err) { throw err; console.log(err);};  
-   
-    //     });
-      
-    // });
 });
  
 function nameRespond(name) {
@@ -158,8 +175,6 @@ function simpleTextRespond(text) {
   }
   return respond;
 }
-
-
 function createTextRespond(name, email) {
     let respond = {
         "fulfillmentText": "This is a text response",
@@ -206,4 +221,4 @@ function createTextRespond(name, email) {
       }
       return respond;
 }
-
+//###########################################################################################################
