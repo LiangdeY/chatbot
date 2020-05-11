@@ -43,7 +43,7 @@ app.post('/login', function(req, res) {
     db.query("SELECT * FROM users WHERE UniKey = '" + credential.unikey + "'"
     , function (err, result){
       try{     
-        
+
         if(credential.password == result[0].Password){
           let user = result[0] ;
           res.set('Content-Type', 'application/json');
@@ -69,8 +69,7 @@ app.post('/login', function(req, res) {
 //--------Handling dialogflow calls-------------
 app.post('/', function (req, res, next) {
   var intentName = req.body.queryResult.intent.displayName;
-  var queryText = req.body.queryResult.queryText;
-  //console.log(intentName);
+  console.log(intentName);
 
   switch(intentName){
     case 'starter':
@@ -79,13 +78,14 @@ app.post('/', function (req, res, next) {
 
     case 'getUser':
       console.log('getUser called');
+
       var unikey = req.body.queryResult.parameters.unikey;
       db.connect(function(err){  
           db.query("SELECT * FROM users WHERE UniKey = '" + unikey + "'"
           , function (err, result){
             try{    
               name = result[0].Name;
-              res.send(nameRespond(name));  
+              res.send(nameRespond(name, result[0].UniKey, req.body.session));  
             }catch(err) {
               console.log(err);
               res.send(simpleTextRespond("Cannot find unikey:" + unikey + ", would you like to try again?"));  
@@ -94,58 +94,114 @@ app.post('/', function (req, res, next) {
       });
 
       break;
+
     case 'logProductive':
       console.log('logProductive');
-      logData(queryText);
+      findUserAndLog(req, 0);
       //respond is defiend on the dialog console.
       break;
+
     case 'logProductive_hasMore':
       console.log('logProductive_hasMore');
-      logData(queryText);
+      findUserAndLog(req, 0);
       //respond is defiend on the dialog console.
       break;
-    //---
+   
     case 'logUnproductive':
+      //return the unfinished tasks, and mark them as finished
       console.log('logUnproductive');
-      //logData(queryText);
+      let currentUnikey = getCurrentUnikey(req);
       db.connect(function(err){  
-        //TODO:
-        //select a earliest task that the student did finish, and make suggestion.
-        db.query("SELECT * FROM tasks WHERE CourseCode = 'COMP5703'"
+
+        db.query("SELECT * FROM tasks WHERE UniKey = '" + currentUnikey + "' AND IsCompleted = " + 0
         , function (err, result){
           try{    
-            var url = result[0].Url;
-            res.send(simpleTextRespond("Check out this video: " + url));  
+            console.log(result[0]);
+            let url = result[0].Url;
+            let id = result[0].TaskID;
+             console.log(id);
+            db.query("UPDATE tasks SET IsCompleted = 1 WHERE UniKey = '" + currentUnikey + "' AND TaskID = " + id
+            , function (err, resu){
+                console.log(err);          
+            });
+            res.send(simpleTextRespond("This might help: " + url));
           }catch(err) {
             console.log(err);
+            res.send(simpleTextRespond("You have finished all the tasks, you can send the teaching staff questions by starting with 'question:'"));  
           }
         });
+
     });
+      break;
+    
+    case 'askQuestion':
+      console.log('askQuestion called');
+      findUserAndLog(req, 1);
       break;
     
 
     default:
       console.log('no match intent found');
   }
-  function logData(text){
-
-    db.connect(function(err){
-      try{
-        db.query("INSERT INTO Logs (CourseCode, LogDate, LogDescription) " +
-        "VALUES ('COMP5703', NOW(), " + "'" + text + "'" + ");"
-        );
-        console.log("query success");
-      }catch(err){
-        console.log(err);
-      }
-
-    });
-
-  }
 
 });
+
+function getCurrentUnikey(req){
+  let i = 0 ;
+  let currentUserUnikey ='';
+  while (i <req.body.queryResult.outputContexts.length){
+    try{
+      if(currentUserUnikey == undefined || currentUserUnikey == ''){
+        currentUserUnikey = req.body.queryResult.outputContexts[i].parameters["currentUserUnikey"];
+      }
+    } catch(e){ console.log(e); }
+    i++;
+  }
+  if(currentUserUnikey == undefined){
+    console.log("currentUserUnikey is undifined");
+    return null;
+  }
+  else{
+    return currentUserUnikey;
+  }
+}
+
+function findUserAndLog(req, isQuestion){
+  let i = 0 ;
+  let currentUserUnikey ='';
+  while (i <req.body.queryResult.outputContexts.length){
+    try{
+      if(currentUserUnikey == undefined || currentUserUnikey == ''){
+        currentUserUnikey = req.body.queryResult.outputContexts[i].parameters["currentUserUnikey"];
+      }
+    } catch(e){ console.log(e); }
+    i++;
+  }
+  if(currentUserUnikey == undefined){
+    console.log("currentUserUnikey is undifined");
+    res.send(simpleTextRespond("Connection time out, please re-enter your Unikey"));  
+  }
+  else{
+    logData(req.body.queryResult.queryText, currentUserUnikey, isQuestion);
+  }
+}
+
+function logData(text, key, isQuestion){
+  db.connect(function(err){
+    try{
+      db.query("INSERT INTO Logs (UniKey, CourseCode, LogDate, LogDescription, IsQuestion) " +
+      "VALUES (" + "'" + key + "'" +", " + "'COMP5703', NOW(), " + "'" + text + "'" + ", " + isQuestion + ");"
+      );
+      console.log("query success");
+    }catch(err){
+      console.log(err);
+    }
+  });
+}
  
-function nameRespond(name) {
+function nameRespond(name, key, session) {
+  console.log("name=" + name + " key=" + key + " session=" + session);
+
   let respond = {
     "fulfillmentText": "NameRespond_text",
     "fulfillmentMessages": [
@@ -153,8 +209,18 @@ function nameRespond(name) {
         "text": {
             "text":[
                 "Hello " + name + ", what have you done today?"
+                + " (tips: you can start with 'question: ' to send a query to the teaching staff)" 
             ]
         }         
+      }
+    ],
+    "outputContexts":[  
+      {  
+        "name":session + "/contexts/currentUserUnikey",
+        "lifespanCount":20,
+        "parameters":{  
+          "currentUserUnikey":key
+        }
       }
     ]
   }

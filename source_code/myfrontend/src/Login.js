@@ -63,10 +63,7 @@ class Login extends React.Component {
  
     render() {   
       if(this.state.redirect){
-        console.log(this.state.user);
-
         if(this.state.user.IsStudent == '1'){
-          console.log('yo2');
           return(
             <Router>
               <Route path="/StudentView" exact strict render ={
