@@ -65,6 +65,35 @@ app.post('/login', function(req, res) {
   });
 });
 
+app.post('/studentLogs', function(req, res) {
+  //get data from the front end input
+  let key = req.body.unikey;
+
+  //if the password match, return the user
+  db.connect(function(err){  
+    db.query("SELECT * FROM logs WHERE UniKey = '" + key + "'"
+    , function (err, result){
+      try{     
+          let logs = result;
+          res.set('Content-Type', 'application/json');
+          res.send({
+            logs,
+            isSuccess: true
+          });
+          
+        
+      }
+      catch(err) {
+        console.log(err);
+        res.set('Content-Type', 'application/json');
+        res.send({
+            isSuccess: false
+        });
+      }
+    });
+  });
+});
+
 //###########################################################################################################
 //--------Handling dialogflow calls-------------
 app.post('/', function (req, res, next) {

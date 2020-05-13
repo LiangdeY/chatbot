@@ -1,5 +1,5 @@
 import React from 'react';
-import {BrowserRouter as Router, Switch, Route, Redirect} from 'react-router-dom'
+import {BrowserRouter as Router, Route, Redirect} from 'react-router-dom'
 import StudentView from './Rout/StudentView';
 import TeachingStaffView from './Rout/TeachingStaffView';
 
@@ -97,28 +97,32 @@ class Login extends React.Component {
       }
       
       return (
-        <div>
-          <form onSubmit={this.handleSubmit}>
-            <input 
-              type="text" 
-              value={this.state.unikey}   
-              onChange={this.handleInputChange } 
-              placeholder="Unikey" 
-              name="unikey"
-              />
+        <div class="wrapper fadeInDown">
+          <div id="formContent">
+                <h2 class="active"> Sign In </h2>
+                <form onSubmit={this.handleSubmit}>
+                  <input 
+                    class="fadeIn first"
 
-            <input 
-              type="password"
-              value={this.state.password}   
-              onChange={this.handleInputChange } 
-              placeholder="password" 
-              name="password"
-              />
-          
-            <button type="submit">Log in </button>
+                    type="text" 
+                    value={this.state.unikey}   
+                    onChange={this.handleInputChange } 
+                    placeholder="Unikey" 
+                    name="unikey"
+                    />
+                  <input 
+                    class="fadeIn second"
 
-          </form>
-        </div>   
+                    type="password"
+                    value={this.state.password}   
+                    onChange={this.handleInputChange } 
+                    placeholder="password" 
+                    name="password"
+                    />
+                  <button type="submit" class="fadeIn third" >Log in </button>
+                </form>
+            </div>
+        </div>
       );
     };
   };

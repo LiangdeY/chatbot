@@ -4,11 +4,11 @@ import Login from "./Login";
 
 function App() {
   return (
-    <div className="App">    
-      <header className="App-header">
+    <div >    
+      <header >
 
       <Login />
-      
+
       </header>
     </div>
   );
