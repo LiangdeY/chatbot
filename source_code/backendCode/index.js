@@ -51,7 +51,11 @@ app.post('/login', function(req, res) {
               user,
               isSuccess: true
           });
-          
+        }else{
+          res.set('Content-Type', 'application/json');
+          res.send({
+              isSuccess: false
+          });
         }
       }
       catch(err) {
@@ -79,16 +83,37 @@ app.post('/studentLogs', function(req, res) {
           res.send({
             logs,
             isSuccess: true
-          });
-          
-        
+          });   
       }
       catch(err) {
         console.log(err);
         res.set('Content-Type', 'application/json');
-        res.send({
-            isSuccess: false
-        });
+        res.send({ isSuccess: false });
+      }
+    });
+  });
+});
+
+app.post('/teachingStaffLogs', function(req, res) {
+  //get data from the front end input
+  let courseCode = req.body.courseCode;
+
+  //if the password match, return the user
+  db.connect(function(err){  
+    db.query("SELECT * FROM logs WHERE CourseCode = '" + courseCode + "'"
+    , function (err, result){
+      try{     
+          let logs = result;
+          res.set('Content-Type', 'application/json');
+          res.send({
+            logs,
+            isSuccess: true
+          });   
+      }
+      catch(err) {
+        console.log(err);
+        res.set('Content-Type', 'application/json');
+        res.send({ isSuccess: false });
       }
     });
   });

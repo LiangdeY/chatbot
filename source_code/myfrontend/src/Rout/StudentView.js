@@ -1,16 +1,20 @@
 import React from 'react';
 import '../App.css';
+import {BrowserRouter as Router, Route, Redirect} from 'react-router-dom'
+import Login from '../Login';
 
 export default class StudentView extends React.Component {
     constructor(props) {
         super(props);
         //have an array of logs, contains date and obeject
         this.state = {
-            data:[]
+            data:[],
+            redirect: false
           }
-        };
-
-
+    };
+    handleOnClick = () => {
+        this.setState({ redirect: true });
+    }
     //get called whenever the component is renered
     componentDidMount = () => {
         fetch('/studentLogs', { 
@@ -51,58 +55,59 @@ export default class StudentView extends React.Component {
                         dailyLogs.push(addLogs);
                     }
                 }
-                 
-                //lop through each logs.
-                // if this.state.logs.date = body.logs[i]
-                    //add this logs to th date
-                //elas create a new logs and add it to the stae 
-
-                this.setState({
-                    data: dailyLogs
-                });
+                this.setState({ data: dailyLogs.reverse() });
               }
               else{
                 alert('something went wrong when fetching the logs');
               }
             }
-            catch(e){
-              console.log(e); 
-            }
+            catch(e){ console.log(e); }
           });
-
     } 
   
     render(){
         console.log(this.state.data);
+        if(this.state.redirect){
+            return(
+              <Router>
+                <Route path="/" exact strict render ={
+                  () => {
+                      return (
+                        <div>
+                        <Login />
+                        </div>
+                      )}} 
+                />
+               <Redirect to='/'/>
+              </Router>
+            )
+          }
         return (
+            
 
-            <div>
-                <h2>Hello {this.props.user.Name} </h2>
-
-                <div className="StudentViewForm">    
-               
-                            {this.state.data.map(data => (
-                                <dl key={data.day}>
-                                    <dt>{data.day}</dt>  
-                                    <dd> {data.logs.map(log =>(
-                                        <table key={log.LogID}>
+            <div className="fadeInDown">
+                <h2 className="viewHeader" >Hello {this.props.user.Name} </h2>
+                <button onClick={this.handleOnClick} className="logoutBtn" type="button"  >Log out </button>
+                <div className="viewWrapper">    
+                    {this.state.data.map(data => (
+                        <dl key={data.day}  id="viewFormContent">
+                            <dt>{data.day}</dt> 
+                            <dd className="viewItem"> 
+                                {data.logs.map(log =>(
+                                    <table key={log.LogID}>
+                                        <tbody>
                                             <tr>
-                                            <th>{log.LogDate}</th>
-                                            <th>{log.LogDescription}</th>
+                                                <td>{log.LogDate}</td>
+                                                <td className="viewItemText">{log.LogDescription}</td>
                                             </tr>
-                                            </table>
-
-                                        ))}
-                                    </dd>    
-                                </dl>
-        
-                            ))}
-                          </div>
+                                        </tbody>
+                                    </table>
+                                ))}
+                            </dd>    
+                        </dl>
+                    ))}
+                </div>
             </div>
-          
-           
-
-
         );
     }
 }

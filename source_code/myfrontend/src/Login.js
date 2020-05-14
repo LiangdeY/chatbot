@@ -97,12 +97,12 @@ class Login extends React.Component {
       }
       
       return (
-        <div class="wrapper fadeInDown">
+        <div className="wrapper fadeInDown">
           <div id="formContent">
-                <h2 class="active"> Sign In </h2>
+                <h2 className="active loginHeader"> Sign In </h2>
                 <form onSubmit={this.handleSubmit}>
                   <input 
-                    class="fadeIn first"
+                    className="fadeIn first"
 
                     type="text" 
                     value={this.state.unikey}   
@@ -111,7 +111,7 @@ class Login extends React.Component {
                     name="unikey"
                     />
                   <input 
-                    class="fadeIn second"
+                    className="fadeIn second"
 
                     type="password"
                     value={this.state.password}   
@@ -119,7 +119,7 @@ class Login extends React.Component {
                     placeholder="password" 
                     name="password"
                     />
-                  <button type="submit" class="fadeIn third" >Log in </button>
+                  <button type="submit" className="fadeIn third" >Log in </button>
                 </form>
             </div>
         </div>
