@@ -30,6 +30,8 @@ app.listen(port, () => console.log(`Example app listening at http://localhost:${
 
 app.use(bodyParser.urlencoded({ extended: false }));
 // parse application/json
+// instead of just using bodyParser.jon(), you can use let app = express();
+//app.use(bodyParser.json({ type: 'application/json' })); such that we wouldn't have to pass the content type in every api call
 app.use(bodyParser.json());
 
 //###########################################################################################################
