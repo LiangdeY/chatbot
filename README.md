@@ -12,6 +12,6 @@ The Chatbot helps in motivating the students by asking them to log their work ev
     
 # Installation
     Clone the repo
-    git clone https://github.com/your_username_/Project-Name.git
+    git clone https://github.com/LiangdeYang/chatbot.git
     Install NPM packages
     npm install
